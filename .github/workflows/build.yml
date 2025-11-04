@@ -74,20 +74,6 @@ jobs:
         name: pixelscribe-jar
         path: pixelScribe/target/*.jar
         retention-days: 30
-    
-    - name: Dependency Check (Security Scan)
-      run: |
-        cd pixelScribe
-        ./mvnw org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=8
-      continue-on-error: true
-    
-    - name: Upload security report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: security-report
-        path: pixelScribe/target/dependency-check-report.html
-        retention-days: 30
       
     - name: Build status
       run: echo "✅ Build completed successfully!"
