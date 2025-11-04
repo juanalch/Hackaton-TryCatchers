@@ -1,14 +1,26 @@
 name: Build and Test
 
 on:
-  push:
-    branches: [ develop, main, feature/** ]
   pull_request:
     branches: [ develop, main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        env:
+          MONGO_INITDB_ROOT_USERNAME: testuser
+          MONGO_INITDB_ROOT_PASSWORD: testpass
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     
     steps:
     - name: Checkout code
@@ -20,18 +32,62 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: maven
+    
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
         
-    - name: Build with Maven
+    - name: Build and Test with Maven
       run: |
         cd pixelScribe
         chmod +x mvnw
-        ./mvnw clean install -DskipTests
+        ./mvnw clean package -DskipTests
+      env:
+        SPRING_DATA_MONGODB_URI: mongodb://testuser:testpass@localhost:27017/pixelscribe_test?authSource=admin
+        JWT_SECRET: test-secret-key-for-ci-cd-pipeline-minimum-256-bits
         
     - name: Run tests
       run: |
         cd pixelScribe
         ./mvnw test
       continue-on-error: true
+      env:
+        SPRING_DATA_MONGODB_URI: mongodb://testuser:testpass@localhost:27017/pixelscribe_test?authSource=admin
+        JWT_SECRET: test-secret-key-for-ci-cd-pipeline-minimum-256-bits
+    
+    - name: Upload test reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports
+        path: pixelScribe/target/surefire-reports/
+        retention-days: 30
+        
+    - name: Upload JAR artifact
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: pixelscribe-jar
+        path: pixelScribe/target/*.jar
+        retention-days: 30
+    
+    - name: Dependency Check (Security Scan)
+      run: |
+        cd pixelScribe
+        ./mvnw org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=8
+      continue-on-error: true
+    
+    - name: Upload security report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-report
+        path: pixelScribe/target/dependency-check-report.html
+        retention-days: 30
       
     - name: Build status
       run: echo "✅ Build completed successfully!"
