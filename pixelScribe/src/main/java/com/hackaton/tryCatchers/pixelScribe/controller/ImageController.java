@@ -1,18 +1,64 @@
-package com.hackaton.tryCatchers.pixelScribe.controller;
+package com.pixelscribe.controller;
 
+import com.pixelscribe.dto.ImageAnalysisDTO;
+import com.pixelscribe.dto.ImageUploadResponse;
+import com.pixelscribe.security.SecurityUtils;
+import com.pixelscribe.service.ImageService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/images")
+@Tag(name = "Images", description = "Endpoints para gestión de imágenes")
+@SecurityRequirement(name = "bearerAuth")
 public class ImageController {
-
-    @PostMapping("/upload")
-    public String uploadImage() {
-        return "Upload endpoint";
+    
+    @Autowired
+    private ImageService imageService;
+    
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Subir y analizar una imagen")
+    public ResponseEntity<ImageUploadResponse> uploadImage(
+            @RequestParam("file") MultipartFile file) {
+        try {
+            String userId = SecurityUtils.getCurrentUserId();
+            ImageUploadResponse response = imageService.uploadAndAnalyze(file, userId);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ImageUploadResponse(null, null, "FAILED", e.getMessage()));
+        }
     }
-
+    
     @GetMapping
-    public String getImages() {
-        return "Get images endpoint";
+    @Operation(summary = "Obtener todas las imágenes del usuario")
+    public ResponseEntity<List<ImageAnalysisDTO>> getUserImages() {
+        try {
+            String userId = SecurityUtils.getCurrentUserId();
+            List<ImageAnalysisDTO> images = imageService.getUserImages(userId);
+            return ResponseEntity.ok(images);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    @GetMapping("/{id}")
+    @Operation(summary = "Obtener una imagen específica")
+    public ResponseEntity<ImageAnalysisDTO> getImage(@PathVariable String id) {
+        try {
+            String userId = SecurityUtils.getCurrentUserId();
+            ImageAnalysisDTO image = imageService.getImageById(id, userId);
+            return ResponseEntity.ok(image);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
