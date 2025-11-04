@@ -1,5 +1,4 @@
 package com.pixelscribe.controller;
-
 import com.pixelscribe.dto.ImageAnalysisDTO;
 import com.pixelscribe.dto.ImageUploadResponse;
 import com.pixelscribe.security.SecurityUtils;
@@ -12,18 +11,16 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/images")
 @Tag(name = "Images", description = "Endpoints para gestión de imágenes")
 @SecurityRequirement(name = "bearerAuth")
+
 public class ImageController {
-    
     @Autowired
     private ImageService imageService;
-    
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Subir y analizar una imagen")
     public ResponseEntity<ImageUploadResponse> uploadImage(
@@ -37,7 +34,7 @@ public class ImageController {
                     .body(new ImageUploadResponse(null, null, "FAILED", e.getMessage()));
         }
     }
-    
+  
     @GetMapping
     @Operation(summary = "Obtener todas las imágenes del usuario")
     public ResponseEntity<List<ImageAnalysisDTO>> getUserImages() {
@@ -49,7 +46,7 @@ public class ImageController {
             return ResponseEntity.badRequest().build();
         }
     }
-    
+  
     @GetMapping("/{id}")
     @Operation(summary = "Obtener una imagen específica")
     public ResponseEntity<ImageAnalysisDTO> getImage(@PathVariable String id) {
@@ -59,6 +56,10 @@ public class ImageController {
             return ResponseEntity.ok(image);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
+
         }
+
     }
+
 }
+ 
