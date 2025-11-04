@@ -1,6 +1,6 @@
 package com.hackaton.tryCatchers.pixelScribe.controller;
 
-import com.pixelscribe.service.AIService;
+import com.hackaton.tryCatchers.pixelScribe.service.AIService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
