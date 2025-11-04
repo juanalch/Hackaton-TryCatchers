@@ -16,9 +16,15 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
-        final String securitySchemeName = "bearerAuth";
-        
         return new OpenAPI()
+                .components(new Components()
+                        .addSecuritySchemes("bearerAuth",
+                                new SecurityScheme()
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")
+                                        .description("Ingresa el token JWT obtenido del endpoint de login. Ejemplo: Bearer eyJhbGciOiJIUzI1NiIs...")))
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .info(new Info()
                         .title("PixelScribe API")
                         .description("API para análisis de imágenes con IA - Proyecto Hackaton TryCatchers")
@@ -28,14 +34,6 @@ public class SwaggerConfig {
                                 .email("contact@pixelscribe.com"))
                         .license(new License()
                                 .name("Apache 2.0")
-                                .url("https://www.apache.org/licenses/LICENSE-2.0.html")))
-                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
-                .components(new Components()
-                        .addSecuritySchemes(securitySchemeName, new SecurityScheme()
-                                .name(securitySchemeName)
-                                .type(SecurityScheme.Type.HTTP)
-                                .scheme("bearer")
-                                .bearerFormat("JWT")
-                                .description("Ingresa el token JWT obtenido del endpoint de login. Ejemplo: Bearer eyJhbGciOiJIUzI1NiIs...")));
+                                .url("https://www.apache.org/licenses/LICENSE-2.0.html")));
     }
 }
